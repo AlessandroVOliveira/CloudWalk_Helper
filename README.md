@@ -2,206 +2,239 @@
   <img src="logo.svg" alt="CloudWalk Helper" width="300">
 </p>
 
-# CloudWalk Helper 🚀
+# CloudWalk Helper
 
-A RAG-powered chatbot that answers questions about CloudWalk, InfinitePay, JIM, and Stratus using LangChain, ChromaDB, and Ollama.
+A RAG-powered chatbot that answers questions about CloudWalk, InfinitePay, JIM, and Stratus. Built with LangChain, ChromaDB, HuggingFace Embeddings, and OpenRouter.
 
-## Features
+---
 
-- 💬 **Natural Language Q&A**: Ask questions in English or Portuguese
-- 🔍 **RAG-powered**: Retrieval-Augmented Generation for accurate, contextual answers
-- 🎨 **Modern UI**: Clean, dark-themed chat interface inspired by GPT/Gemini
-- 📚 **Knowledge Base**: Curated information about CloudWalk products and services
-- 🔗 **Source Links**: Responses include relevant URLs when helpful
+## 1. Overview
 
-## Prerequisites
+**CloudWalk Helper** is an intelligent chatbot that provides accurate information about CloudWalk and its ecosystem of products:
 
-- Python 3.9+
-- [Ollama](https://ollama.ai/) installed and running
-- llama3.2 model pulled in Ollama
+- **CloudWalk** — Fintech company building the best payment network on Earth
+- **InfinitePay** — Payment platform for Brazilian entrepreneurs
+- **JIM** — AI-powered financial assistant
+- **Stratus** — Open-source blockchain for global payments
 
-## Installation
+### Key Features
 
-1. **Clone the repository** (if applicable):
-   ```bash
-   cd CloudWalk-Helper
-   ```
+| Feature | Description |
+|---------|-------------|
+| 🌐 **Bilingual** | Supports English and Portuguese with automatic language detection |
+| 🔍 **RAG-powered** | Retrieval-Augmented Generation for contextual, accurate answers |
+| 📚 **Knowledge Base** | Curated information from official CloudWalk sources |
+| 🔗 **Source Citations** | Responses include relevant URLs when available |
+| ⏱️ **Response Timing** | Shows processing time for transparency |
+| 🐳 **Docker Ready** | One-command deployment with Docker |
 
-2. **Create virtual environment** (recommended):
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate  # Windows
-   # or
-   source venv/bin/activate  # Linux/Mac
-   ```
 
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+---
 
-4. **Setup Ollama**:
-   ```bash
-   ollama serve
-   ollama pull llama3.2:3b
-   ollama pull mxbai-embed-large
-   ```
-
-## Usage
-
-### Run the Chatbot
-
-```bash
-streamlit run app.py
-```
-
-The application will open in your browser at `http://localhost:8501`.
-
-### Test the RAG Pipeline
-
-```bash
-python -m src.embeddings  # Test embeddings and vector store
-python -m src.rag_chain   # Test RAG chain
-```
-
-## Sample Conversations
-
-### Conversation 1: Company Overview
+## 2. Architecture
 
 ```
-User: What is CloudWalk?
-
-CloudWalk Helper: CloudWalk is a fintech company that aims to create the best 
-payment network on Earth and eventually expand it to other planets. The company's 
-mission is to democratize the financial industry, empower entrepreneurs through 
-innovative solutions, and provide them with technological, inclusive, and 
-life-changing experiences.
-
-As part of this mission, CloudWalk focuses on delivering high-quality services 
-using cutting-edge technologies like AI and blockchain. They strive to create a 
-customer-centric approach, putting their customers at the forefront of everything 
-they do.
-
-CloudWalk is also behind InfinitePay, which is their flagship payment platform in 
-Brazil. InfiniteTap, a part of InfinitePay, offers smartphone payments for 
-individuals who don't have a CNPJ (Brazilian Business Register), allowing them to 
-make sales using their CPF and smartphone.
-
-Additionally, CloudWalk has developed JIM, an AI assistant that helps with 
-financial management, creates marketing campaigns, makes payments, reminds about 
-commitments, and provides business insights 24/7.
-
-You can learn more about CloudWalk by visiting their official website: 
-https://www.cloudwalk.io/
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Streamlit     │────▶│   RAG Chain     │────▶│   OpenRouter    │
+│   Chat UI       │◀────│   (LangChain)   │◀────│   (LLM API)     │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │
+                                 ▼
+                        ┌─────────────────┐
+                        │    ChromaDB     │
+                        │  + HuggingFace  │
+                        │   Embeddings    │
+                        └─────────────────┘
 ```
 
-### Conversation 2: Product Inquiry (Portuguese)
+### Components
 
-```
-User: O que é a InfinitePay?
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Frontend** | Streamlit | Modern chat interface with dark theme |
+| **RAG Framework** | LangChain | Orchestrates retrieval and generation |
+| **Vector Database** | ChromaDB | Stores and retrieves document embeddings |
+| **Embeddings** | HuggingFace (all-MiniLM-L6-v2) | Converts text to vectors locally |
+| **LLM** | OpenRouter (Llama 3.2 free tier) | Generates responses from context |
 
-CloudWalk Helper: A InfinitePay é uma plataforma de pagamentos financeira 
-brasileira criada pela CloudWalk. Ela oferece serviços de pagamento para 
-consumidores e empresas, permitindo realizar transações de forma segura e 
-conveniente.
+### Data Flow
 
-Com a InfinitePay, é possível realizar pagamentos com cartões de débito ou 
-crédito, parcelamentos até 12x sem taxas adicionais, e também utilizar o Pix 
-(com taxa zero). Além disso, a plataforma oferece contas digitais integradas 
-para gerenciar receitas, pagamentos e outras operações financeiras.
+1. **User Input** → User sends a question via the Streamlit chat interface
+2. **Language Detection** → System detects if the question is in English or Portuguese
+3. **Retrieval** → Relevant documents are fetched from ChromaDB using semantic search
+4. **Generation** → Retrieved context + question are sent to OpenRouter LLM
+5. **Response** → LLM generates a contextual response displayed to the user
 
-A InfinitePay é uma empresa líder no mercado de pagamentos do Brasil, com uma 
-equipe especializada em tecnologia e inovação. Ela visa democratizar o acesso a 
-produtos de pagamento e software de classe mundial, facilitando a vida das 
-pessoas e dos negócios.
-
-Para saber mais sobre os serviços da InfinitePay, você pode visitar o site 
-oficial: https://www.infinitepay.io/
-```
-
-### Conversation 3: Technical Features
-
-```
-User: What is Stratus and how does it work?
-
-CloudWalk Helper: Stratus is an open-source blockchain developed by CloudWalk 
-that's designed for global payment networks. It allows for high scalability, 
-security, and customization.
-
-Here are some key features of Stratus:
-1. **High Scalability:** Stratus can process up to 1,800 transactions per second 
-   (TPS) with a potential capacity of 160 million transactions per day.
-2. **Ethereum Compatibility:** Stratus is integrated with the Ethereum Virtual 
-   Machine (EVM), allowing for the creation of smart contracts and advanced 
-   functionalities for financial transactions.
-3. **Enhanced Security:** The blockchain has a permissioned architecture, where 
-   only authorized nodes can participate, ensuring security and control over 
-   the network.
-4. **Layered Architecture:** Stratus uses a layered architecture with JSON-RPC 
-   for communication and RocksDB for optimized storage.
-
-Stratus works by allowing users to create a node on the network, which validates 
-transactions and verifies data. The blockchain's sharding and multi-raft consensus 
-models enable exponential capacity expansion, making it an ideal solution for 
-businesses seeking secure, scalable, and customizable blockchain infrastructure.
-
-To learn more about Stratus, I recommend checking out its GitHub repository: 
-https://github.com/cloudwalk/stratus
-```
-
-## Project Structure
+### Project Structure
 
 ```
 CloudWalk-Helper/
 ├── app.py                    # Streamlit chat interface
 ├── src/
-│   ├── __init__.py
-│   ├── embeddings.py         # Vector store management
-│   └── rag_chain.py          # RAG chain logic
+│   ├── embeddings.py         # HuggingFace embeddings + ChromaDB
+│   └── rag_chain.py          # RAG chain with OpenRouter/Ollama
 ├── data/
 │   ├── cloudwalk_knowledge.md    # English knowledge base
 │   └── cloudwalk_knowledge_pt.md # Portuguese knowledge base
 ├── chroma_db/                # Vector database (generated)
-├── context/
-│   └── prd.md                # Product requirements
-├── requirements.txt
-└── README.md
+├── Dockerfile                # Container configuration
+├── docker-compose.yml        # Docker Compose setup
+├── start.bat / start.sh      # One-command launchers
+└── .env.example              # Environment template
 ```
 
-## Technology Stack
+---
 
-| Component | Technology |
-|-----------|------------|
-| LLM | Ollama (llama3.2:3b) |
-| Embeddings | Ollama (mxbai-embed-large) |
-| Vector DB | ChromaDB |
-| RAG Framework | LangChain |
-| Frontend | Streamlit |
+## 3. How to Run
+
+### Prerequisites
+
+- Docker and Docker Compose **OR** Python 3.9+
+- OpenRouter API key (free) — Get one at [openrouter.ai](https://openrouter.ai)
+
+### Option A: Docker (Recommended)
+
+**Windows:**
+```bash
+start.bat
+```
+
+**Linux/Mac:**
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+The script will:
+1. Create `.env` file from template
+2. Prompt you to add your API key
+3. Build and start the Docker container
+4. Open the browser at http://localhost:8501
+
+**Manual Docker:**
+```bash
+cp .env.example .env
+# Edit .env and add your OPENROUTER_API_KEY
+docker-compose up --build
+```
+
+### Option B: Local Python
+
+```bash
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env and add your OPENROUTER_API_KEY
+
+# Run the chatbot
+streamlit run app.py
+```
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OPENROUTER_API_KEY` | Yes* | - | Your OpenRouter API key |
+| `LLM_PROVIDER` | No | `openrouter` | `openrouter` or `ollama` |
+| `OPENROUTER_MODEL` | No | `meta-llama/llama-3.2-3b-instruct:free` | Model to use |
+| `DEBUG` | No | `false` | Enable debug logging |
+
+*Required if using OpenRouter (default). Not needed if using Ollama.
+
+### Using Ollama (Local LLM Alternative)
+
+```bash
+# In .env file:
+LLM_PROVIDER=ollama
+OLLAMA_MODEL=llama3.2:3b
+
+# Start Ollama and pull the model:
+ollama serve
+ollama pull llama3.2:3b
+```
+
+---
+
+## 4. Demo Guide
+
+### Quick Demo
+
+1. **Start the application** using one of the methods above
+2. **Open the browser** at http://localhost:8501
+3. **Ask a question** in the chat input
+
+### Sample Questions to Try
+
+**English:**
+- "What is CloudWalk?"
+- "How does InfinitePay work?"
+- "What is Stratus blockchain?"
+- "Tell me about JIM"
+
+**Portuguese:**
+- "O que é a CloudWalk?"
+- "Como funciona a InfinitePay?"
+- "Quais são os valores da empresa?"
+
+### Expected Behavior
+
+- **Response Time**: Displayed at the bottom of each response (typically 5-15 seconds)
+- **Language Detection**: System automatically responds in the same language as the question
+- **Source Links**: Relevant URLs are included when the knowledge base contains them
+
+### Observability & Logs
+
+The application provides comprehensive logging for debugging and traceability:
+
+```bash
+# View logs in Docker
+docker-compose logs -f
+
+# Sample log output:
+2025-12-28 19:44:21 | CloudWalkHelper.RAG | INFO | === New Question ===
+2025-12-28 19:44:21 | CloudWalkHelper.RAG | INFO | Using OpenRouter with model: meta-llama/llama-3.2-3b-instruct:free
+2025-12-28 19:44:22 | CloudWalkHelper.Embeddings | INFO | Loading embeddings model: sentence-transformers/all-MiniLM-L6-v2
+2025-12-28 19:44:24 | CloudWalkHelper.RAG | INFO | Processing question: 'What is CloudWalk?...' (Language: English)
+2025-12-28 19:44:24 | CloudWalkHelper.RAG | INFO | Retrieved 8 documents in 0.02s
+2025-12-28 19:44:29 | CloudWalkHelper.RAG | INFO | Total response time: 7.54s
+```
+
+### Debug Mode
+
+Enable detailed logging by setting in `.env`:
+```bash
+DEBUG=true
+```
+
+---
 
 ## Troubleshooting
 
-### Ollama Connection Error
-Make sure Ollama is running:
-```bash
-ollama serve
-```
+| Issue | Solution |
+|-------|----------|
+| **429 Too Many Requests** | OpenRouter rate limit reached. Wait a few seconds between requests. |
+| **Model Not Found (Ollama)** | Run `ollama pull llama3.2:3b` to download the model. |
+| **Slow First Response** | Initial query loads embeddings model. Subsequent queries are faster. |
+| **Connection Error** | Verify your API key is correct and you have internet access. |
 
-### Model Not Found
-Pull the required models:
-```bash
-ollama pull llama3.2:3b
-ollama pull mxbai-embed-large
-```
-
-### Slow First Response
-The first query may be slow as it loads the model and creates embeddings. Subsequent queries will be faster.
-
-## License
-
-MIT License
+---
 
 ## Links
 
 - [CloudWalk](https://www.cloudwalk.io/)
 - [InfinitePay](https://www.infinitepay.io/)
 - [Stratus](https://www.cloudwalk.io/stratus)
+- [OpenRouter](https://openrouter.ai/)
+
+---
+
+## License
+
+MIT License

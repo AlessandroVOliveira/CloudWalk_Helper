@@ -4,22 +4,40 @@ Handles document loading, chunking, and vector database operations.
 """
 
 import os
+import logging
 from pathlib import Path
+from dotenv import load_dotenv
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
+# Load environment variables
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger("CloudWalkHelper.Embeddings")
 
 # Configuration
 DATA_DIR = Path(__file__).parent.parent / "data"
 CHROMA_DB_DIR = Path(__file__).parent.parent / "chroma_db"
 COLLECTION_NAME = "cloudwalk_knowledge"
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 def get_embeddings():
-    """Get Ollama embeddings model."""
-    return OllamaEmbeddings(model="mxbai-embed-large:latest")
+    """Get HuggingFace embeddings model (lightweight, runs locally)."""
+    logger.info(f"Loading embeddings model: {EMBEDDING_MODEL}")
+    return HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL,
+        model_kwargs={'device': 'cpu'},
+        encode_kwargs={'normalize_embeddings': True}
+    )
 
 
 def load_documents():
@@ -31,7 +49,7 @@ def load_documents():
         loader_kwargs={"encoding": "utf-8"}
     )
     documents = loader.load()
-    print(f"Loaded {len(documents)} documents from {DATA_DIR}")
+    logger.info(f"Loaded {len(documents)} documents from {DATA_DIR}")
     return documents
 
 
@@ -44,7 +62,7 @@ def split_documents(documents, chunk_size=1000, chunk_overlap=200):
         separators=["\n---\n", "\n## ", "\n### ", "\n\n", "\n", " ", ""]
     )
     chunks = text_splitter.split_documents(documents)
-    print(f"Split into {len(chunks)} chunks")
+    logger.info(f"Split into {len(chunks)} chunks (chunk_size={chunk_size}, overlap={chunk_overlap})")
     return chunks
 
 
@@ -63,7 +81,7 @@ def create_vector_store(chunks, embeddings=None):
         collection_name=COLLECTION_NAME,
         persist_directory=str(CHROMA_DB_DIR)
     )
-    print(f"Created vector store with {len(chunks)} documents at {CHROMA_DB_DIR}")
+    logger.info(f"Created vector store with {len(chunks)} documents at {CHROMA_DB_DIR}")
     return vector_store
 
 
@@ -74,7 +92,7 @@ def get_vector_store(embeddings=None):
     
     # Check if vector store exists
     if CHROMA_DB_DIR.exists() and any(CHROMA_DB_DIR.iterdir()):
-        print("Loading existing vector store...")
+        logger.info("Loading existing vector store...")
         vector_store = Chroma(
             collection_name=COLLECTION_NAME,
             embedding_function=embeddings,
@@ -82,7 +100,7 @@ def get_vector_store(embeddings=None):
         )
         return vector_store
     else:
-        print("Creating new vector store...")
+        logger.info("Creating new vector store...")
         documents = load_documents()
         chunks = split_documents(documents)
         return create_vector_store(chunks, embeddings)
@@ -95,7 +113,7 @@ def rebuild_vector_store():
     # Remove existing store
     if CHROMA_DB_DIR.exists():
         shutil.rmtree(CHROMA_DB_DIR)
-        print("Removed existing vector store")
+        logger.info("Removed existing vector store")
     
     # Rebuild
     embeddings = get_embeddings()

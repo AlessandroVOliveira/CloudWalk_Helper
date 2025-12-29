@@ -3,6 +3,7 @@ CloudWalk Helper - Streamlit Chat Interface
 A RAG-powered chatbot for CloudWalk, InfinitePay, JIM, and Stratus.
 """
 
+import time
 import streamlit as st
 from src.rag_chain import simple_ask, ask
 
@@ -170,15 +171,22 @@ def display_chat_history():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            # Show response time for assistant messages if available
+            if message["role"] == "assistant" and "response_time" in message:
+                st.caption(f"⏱️ Response time: {message['response_time']:.2f}s")
 
 
-def get_response(user_input: str) -> str:
-    """Get response from the RAG chain."""
+
+def get_response(user_input: str) -> tuple[str, float]:
+    """Get response from the RAG chain with timing."""
+    start_time = time.time()
     try:
         response = simple_ask(user_input)
-        return response
+        elapsed = time.time() - start_time
+        return response, elapsed
     except Exception as e:
-        return f"Sorry, I encountered an error: {str(e)}. Please make sure Ollama is running with the llama3.2 model."
+        elapsed = time.time() - start_time
+        return f"Sorry, I encountered an error: {str(e)}. Please make sure Ollama is running with the llama3.2 model.", elapsed
 
 
 def main():
@@ -206,11 +214,17 @@ def main():
         # Get and display assistant response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                response = get_response(user_input)
+                response, response_time = get_response(user_input)
             st.markdown(response)
+            # Display response time in muted text
+            st.caption(f"⏱️ Response time: {response_time:.2f}s")
         
-        # Add assistant message to history
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        # Add assistant message to history (with timing metadata)
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": response,
+            "response_time": response_time
+        })
         
         # Rerun to update UI
         st.rerun()
